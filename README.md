@@ -24,7 +24,7 @@ o de `~/.claude/skills/` (todos tus proyectos).
 
 | Skill | Qué hace |
 | --- | --- |
-| [`revision-cruzada`](skills/revision-cruzada/SKILL.md) | Cuando Claude termina un trabajo, se lo pasa a GPT (vía OpenCode) para que lo revise sin poder tocar nada, y aplica solo lo que comprueba que es verdad. Vale con Gemini, DeepSeek, Kimi y otros. |
+| [`revision-cruzada`](skills/revision-cruzada/SKILL.md) | Cuando Claude termina un trabajo, se lo pasa a GPT (con Codex) para que lo revise sin poder tocar nada, y aplica solo lo que comprueba que es verdad. Vale con cualquier combinación: Gemini, DeepSeek, Kimi y otros vía OpenCode. |
 
 ## Licencia
 

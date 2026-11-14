@@ -1,6 +1,6 @@
 ---
 name: revision-cruzada
-description: Pide a un modelo de otra empresa (GPT por defecto, vía OpenCode) que revise el trabajo que acabas de hacer, sin que pueda tocar nada, y aplica solo lo que compruebes que es verdad. Úsala al terminar una tarea que importe (una app, una función nueva, un arreglo delicado), antes de dar algo por bueno, o cuando quieras una segunda opinión sobre una decisión. Admite rondas de seguimiento con el mismo revisor.
+description: Pide a un modelo de otra empresa (GPT con Codex por defecto) que revise el trabajo que acabas de hacer, sin que pueda tocar nada, y aplica solo lo que compruebes que es verdad. Úsala al terminar una tarea que importe (una app, una función nueva, un arreglo delicado), antes de dar algo por bueno, o cuando quieras una segunda opinión sobre una decisión. Admite rondas de seguimiento con el mismo revisor.
 ---
 
 # Revisión cruzada entre IAs
@@ -9,33 +9,25 @@ Un modelo que no ha hecho el trabajo, y que además es de otra empresa y está e
 distinto, ve los fallos que el autor ya no ve. Pasa incluso cuando el revisor es peor modelo.
 Tú (el agente que ha hecho el trabajo) eres el **autor**; el otro modelo es el **revisor**.
 
-El revisor **solo lee**: no puede editar ficheros, ni navegar, ni ejecutar nada que no sea
-de lectura. Tú decides qué se aplica.
+El revisor **solo lee**: no puede editar ficheros ni ejecutar nada que cambie el proyecto.
+Tú decides qué se aplica.
+
+Vale cualquier combinación de IAs que se puedan lanzar desde el terminal sin conversación
+(Claude Code, Codex, Gemini CLI, OpenCode...). La única regla: el revisor es **de otra empresa** que tú.
+Por defecto, GPT con **Codex**; para otros modelos, ver "Otros revisores" al final.
 
 ## Requisitos (compruébalos antes de empezar)
 
-1. **OpenCode instalado.** `opencode --version`. Si no está, pide permiso al usuario e instálalo:
-   - macOS / Linux: `curl -fsSL https://opencode.ai/install | bash` (o `brew install opencode`)
-   - Windows: `npm install -g opencode-ai`
-   Si tras instalar no aparece el comando, prueba con la ruta completa (`~/.opencode/bin/opencode`).
-2. **Sesión iniciada con la cuenta del revisor.** Para GPT con la suscripción de ChatGPT (Plus o
-   superior): `opencode auth login`, elegir **OpenAI** y el método de **ChatGPT Plus/Pro**; se abre el
-   navegador y el usuario acepta. Es una sola vez. Si no puedes completarlo tú (pide elegir en un menú
-   o confirmar en el navegador), díselo al usuario y espera a que lo haga.
-3. **OpenCode 2 o superior.** `opencode --version`; si es la 1.x, `opencode upgrade`. Los comandos de
-   abajo son los de la versión 2.
-4. **Modelo disponible.** `opencode models | grep '^openai/'` lista los GPT de su cuenta. Usa el más
-   potente que aparezca (por ejemplo `openai/gpt-6.1-sol`) y guarda el elegido en la sección
-   "Configuración" de abajo para no volver a buscarlo.
+1. **Codex instalado.** `codex --version`. Si no está, pide permiso al usuario e instálalo:
+   `npm install -g @openai/codex` (o `brew install codex` en macOS).
+2. **Sesión iniciada con su cuenta de ChatGPT** (Plus o superior): `codex login status`. Si no hay
+   sesión, `codex login` abre el navegador y el usuario acepta. Es una sola vez. Si no puedes
+   completarlo tú, díselo al usuario y espera a que lo haga.
 
 ### Configuración
 
-- Revisor: `openai/<el GPT más potente de la lista>`
-- Esfuerzo: `high` (va pegado al modelo con `#`: `openai/gpt-6.1-sol#high`)
-
-Otros revisores, mismo método: cambia el modelo (`opencode auth login` con su proveedor y
-`opencode models | grep '^<proveedor>/'`). Por ejemplo Gemini (`google/...`) o modelos chinos como DeepSeek,
-Qwen, Kimi o GLM. La regla es que el revisor sea **de otra empresa** que tú.
+- Revisor: el modelo por defecto de Codex (el mejor GPT de su plan). Para fijar otro: `-m <modelo>`.
+- Esfuerzo: `high` (`-c model_reasoning_effort="high"`; opciones `low`, `medium`, `high`, `xhigh`).
 
 ## Cuándo usarla
 
@@ -63,23 +55,22 @@ Prepara el prompt en `.revision/prompt.md` con la plantilla de "Prompt del revis
 rellenando el contexto. Después ejecuta, desde la carpeta del proyecto:
 
 ```bash
-OPENCODE_CONFIG_CONTENT='{"agent":{"revisor":{"mode":"primary","description":"revisor de solo lectura","permission":{"edit":"deny","webfetch":"deny","external_directory":"deny","task":"deny","bash":{"*":"deny","cat*":"allow","ls*":"allow","head*":"allow","tail*":"allow","wc*":"allow","grep*":"allow","rg*":"allow","find*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git status*":"allow"}}}}}' \
-opencode run --standalone --agent revisor -m '<modelo>#high' --format json \
-  "$(cat .revision/prompt.md)" < /dev/null > .revision/ronda-1.jsonl
+codex exec --sandbox read-only --skip-git-repo-check -c model_reasoning_effort="high" \
+  --json -o .revision/ronda-1.md - < .revision/prompt.md > .revision/ronda-1.jsonl
 ```
 
 Importante:
 
-- **`< /dev/null` es obligatorio**: sin él, `opencode run` se queda esperando para siempre.
-- **`--standalone` es obligatorio**: sin él OpenCode usa su servicio en segundo plano, que no lee la
-  definición del agente y falla con `Agent not found: "revisor"`.
+- **`--sandbox read-only`** es lo que hace que el revisor solo pueda leer. No lo quites.
+- `--skip-git-repo-check` hace falta si la carpeta no es un repo de git (Codex se niega si no).
+  Con `read-only` no hay riesgo.
+- El `-` final hace que lea el prompt de `.revision/prompt.md`, así no se queda esperando nada.
 - Una revisión tarda de 3 a 10 minutos. Usa un tiempo límite de al menos 30 minutos o ejecútalo en
   segundo plano y sigue con otra cosa; nunca dejes que tu herramienta lo corte a los 2 minutos.
-- En Windows (PowerShell) la variable se pone antes con `$env:OPENCODE_CONFIG_CONTENT='...'`.
 
-Al acabar, lee `.revision/ronda-1.jsonl`: cada línea es un evento JSON. La respuesta es el texto de
-los eventos `"type":"text"` del último mensaje, y el `sessionID` sirve para las rondas siguientes.
-Si hay un evento `"type":"error"`, para y cuéntaselo al usuario.
+Al acabar, la respuesta del revisor está en `.revision/ronda-1.md`. En `.revision/ronda-1.jsonl`, el
+primer evento (`"type":"thread.started"`) trae el `thread_id` para las rondas siguientes. Si hay un
+evento `"type":"error"` o `"type":"turn.failed"`, para y cuéntaselo al usuario.
 
 ## Paso 3: comprueba cada hallazgo antes de tocar nada
 
@@ -100,11 +91,10 @@ Si la revisión no terminó (tiempo agotado, error), dilo así: "revisión sin c
 ## Rondas de seguimiento
 
 Para que el revisor compruebe tus arreglos o discutirle un hallazgo, continúa **la misma sesión**
-(recuerda todo lo que leyó) con `-s <sessionID>` y un mensaje nuevo:
+(recuerda todo lo que leyó) con el `thread_id` y un mensaje nuevo:
 
 ```bash
-OPENCODE_CONFIG_CONTENT='<el mismo de arriba>' \
-opencode run --standalone --agent revisor -m '<modelo>#high' --format json -s <sessionID> \
+codex exec resume <thread_id> --skip-git-repo-check -o .revision/ronda-2.md \
   "Arreglado el 1 en <fichero>. Descartado el 2 porque <evidencia>. Vuelve a comprobarlo." \
   < /dev/null > .revision/ronda-2.jsonl
 ```
@@ -172,10 +162,27 @@ claude -p --tools "Read,Grep,Glob" --permission-mode dontAsk < .revision/prompt.
 
 ## Errores típicos
 
-- `opencode: command not found`: no está instalado o no está en el PATH (ver Requisitos).
-- Error de autenticación: `opencode auth login` otra vez. No reintentes en bucle; avisa al usuario.
-- El modelo no existe en su cuenta: `opencode models | grep '^openai/'` y elige otro de la lista.
-- `Agent not found: "revisor"`: falta `--standalone`.
-- `unknown flag` con `--pure`, `--dir` o `--variant`: son de OpenCode 1; usa los comandos de arriba.
-- Se queda colgado sin hacer nada: falta `< /dev/null`.
+- `codex: command not found`: no está instalado o no está en el PATH (ver Requisitos).
+- `Not inside a trusted directory` o parecido: falta `--skip-git-repo-check`.
+- Error de autenticación: `codex login` otra vez. No reintentes en bucle; avisa al usuario.
+- Se queda colgado sin hacer nada: le falta el prompt (el `-` con `< .revision/prompt.md`, o
+  `< /dev/null` si el prompt va entre comillas).
 - Respuesta vacía o tiempo agotado: revisión sin confirmar. Díselo al usuario tal cual.
+
+## Otros revisores (Gemini, DeepSeek, Qwen, Kimi, GLM...)
+
+Mismo método con **OpenCode** (OpenCode 2), que vale para casi cualquier proveedor. Instalación:
+`curl -fsSL https://opencode.ai/install | bash` (o `brew install opencode`; Windows:
+`npm install -g opencode-ai`). Sesión: `opencode auth login` con el proveedor elegido. Modelos:
+`opencode models | grep '^<proveedor>/'`. El revisor de solo lectura se define en la variable y se lanza así:
+
+```bash
+OPENCODE_CONFIG_CONTENT='{"agent":{"revisor":{"mode":"primary","description":"revisor de solo lectura","permission":{"edit":"deny","webfetch":"deny","external_directory":"deny","task":"deny","bash":{"*":"deny","cat*":"allow","ls*":"allow","head*":"allow","tail*":"allow","wc*":"allow","grep*":"allow","rg*":"allow","find*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git status*":"allow"}}}}}' \
+opencode run --standalone --agent revisor -m '<proveedor>/<modelo>#high' --format json \
+  "$(cat .revision/prompt.md)" < /dev/null > .revision/ronda-1.jsonl
+```
+
+- `--standalone` y `< /dev/null` son obligatorios (sin el primero: `Agent not found: "revisor"`;
+  sin el segundo se queda colgado). En Windows (PowerShell): `$env:OPENCODE_CONFIG_CONTENT='...'`.
+- La respuesta es el texto de los eventos `"type":"text"`; el `sessionID` sirve para seguir la sesión
+  con `-s <sessionID>`.
