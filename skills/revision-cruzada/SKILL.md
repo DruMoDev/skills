@@ -22,17 +22,19 @@ de lectura. Tú decides qué se aplica.
    superior): `opencode auth login`, elegir **OpenAI** y el método de **ChatGPT Plus/Pro**; se abre el
    navegador y el usuario acepta. Es una sola vez. Si no puedes completarlo tú (pide elegir en un menú
    o confirmar en el navegador), díselo al usuario y espera a que lo haga.
-3. **Modelo disponible.** `opencode models openai` lista los modelos de su cuenta. Usa el GPT más
+3. **OpenCode 2 o superior.** `opencode --version`; si es la 1.x, `opencode upgrade`. Los comandos de
+   abajo son los de la versión 2.
+4. **Modelo disponible.** `opencode models | grep '^openai/'` lista los GPT de su cuenta. Usa el más
    potente que aparezca (por ejemplo `openai/gpt-6.1-sol`) y guarda el elegido en la sección
    "Configuración" de abajo para no volver a buscarlo.
 
 ### Configuración
 
 - Revisor: `openai/<el GPT más potente de la lista>`
-- Esfuerzo: `high` (opciones: `low`, `medium`, `high`, `max`)
+- Esfuerzo: `high` (va pegado al modelo con `#`: `openai/gpt-6.1-sol#high`)
 
 Otros revisores, mismo método: cambia el modelo (`opencode auth login` con su proveedor y
-`opencode models <proveedor>`). Por ejemplo Gemini (`google/...`) o modelos chinos como DeepSeek,
+`opencode models | grep '^<proveedor>/'`). Por ejemplo Gemini (`google/...`) o modelos chinos como DeepSeek,
 Qwen, Kimi o GLM. La regla es que el revisor sea **de otra empresa** que tú.
 
 ## Cuándo usarla
@@ -62,13 +64,15 @@ rellenando el contexto. Después ejecuta, desde la carpeta del proyecto:
 
 ```bash
 OPENCODE_CONFIG_CONTENT='{"agent":{"revisor":{"mode":"primary","description":"revisor de solo lectura","permission":{"edit":"deny","webfetch":"deny","external_directory":"deny","task":"deny","bash":{"*":"deny","cat*":"allow","ls*":"allow","head*":"allow","tail*":"allow","wc*":"allow","grep*":"allow","rg*":"allow","find*":"allow","git diff*":"allow","git log*":"allow","git show*":"allow","git status*":"allow"}}}}}' \
-opencode run --pure --agent revisor -m <modelo> --variant high --format json --dir . \
+opencode run --standalone --agent revisor -m '<modelo>#high' --format json \
   "$(cat .revision/prompt.md)" < /dev/null > .revision/ronda-1.jsonl
 ```
 
 Importante:
 
 - **`< /dev/null` es obligatorio**: sin él, `opencode run` se queda esperando para siempre.
+- **`--standalone` es obligatorio**: sin él OpenCode usa su servicio en segundo plano, que no lee la
+  definición del agente y falla con `Agent not found: "revisor"`.
 - Una revisión tarda de 3 a 10 minutos. Usa un tiempo límite de al menos 30 minutos o ejecútalo en
   segundo plano y sigue con otra cosa; nunca dejes que tu herramienta lo corte a los 2 minutos.
 - En Windows (PowerShell) la variable se pone antes con `$env:OPENCODE_CONFIG_CONTENT='...'`.
@@ -100,7 +104,7 @@ Para que el revisor compruebe tus arreglos o discutirle un hallazgo, continúa *
 
 ```bash
 OPENCODE_CONFIG_CONTENT='<el mismo de arriba>' \
-opencode run --pure --agent revisor -m <modelo> --variant high --format json --dir . -s <sessionID> \
+opencode run --standalone --agent revisor -m '<modelo>#high' --format json -s <sessionID> \
   "Arreglado el 1 en <fichero>. Descartado el 2 porque <evidencia>. Vuelve a comprobarlo." \
   < /dev/null > .revision/ronda-2.jsonl
 ```
@@ -170,6 +174,8 @@ claude -p --tools "Read,Grep,Glob" --permission-mode dontAsk < .revision/prompt.
 
 - `opencode: command not found`: no está instalado o no está en el PATH (ver Requisitos).
 - Error de autenticación: `opencode auth login` otra vez. No reintentes en bucle; avisa al usuario.
-- El modelo no existe en su cuenta: `opencode models openai` y elige otro de la lista.
+- El modelo no existe en su cuenta: `opencode models | grep '^openai/'` y elige otro de la lista.
+- `Agent not found: "revisor"`: falta `--standalone`.
+- `unknown flag` con `--pure`, `--dir` o `--variant`: son de OpenCode 1; usa los comandos de arriba.
 - Se queda colgado sin hacer nada: falta `< /dev/null`.
 - Respuesta vacía o tiempo agotado: revisión sin confirmar. Díselo al usuario tal cual.
