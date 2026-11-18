@@ -54,7 +54,8 @@ ejemplo tocable.
 - **Un solo archivo HTML** con el CSS y el JS dentro. Sin librerías ni fuentes externas ni paso de
   compilación: tiene que abrirse con doble clic, sin internet, y verse igual en el chat.
 - Dibujos en **SVG en línea**, uno por idea, con textos grandes que no se salgan de las cajas (si un
-  texto es largo, la caja crece; nunca encojas la letra). Una sola dirección de lectura.
+  texto es largo, la caja crece; nunca encojas la letra). Una sola dirección de lectura. En el móvil,
+  un dibujo ancho se apila en vertical en vez de encogerse.
 - Se lee bien en el **móvil** (una columna por debajo de 700 px), los controles se usan con teclado y
   la página impresa sigue teniendo sentido.
 - Seguridad: si metes texto que viene de fuera, escápalo (en JS, `textContent`, nunca `innerHTML`).
