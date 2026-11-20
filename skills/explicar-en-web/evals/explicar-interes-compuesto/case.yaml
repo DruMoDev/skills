@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: explicar-interes-compuesto
+expected_outcome: |
+  Una página que explica el interés compuesto con su caso (200 €/mes, 6 %, 25 años), con un dibujo y un ejemplo que se puede tocar con resultados correctos.

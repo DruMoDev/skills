@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: comparar-portada-hoteles
+expected_outcome: |
+  Una página con varias opciones de cabecera realmente distintas, en una rejilla igualada, sin elegir ganadora, con forma de marcar una y devolver la elección.

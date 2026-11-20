@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: editar-priorizar-tareas
+expected_outcome: |
+  Una página para reordenar las 9 tareas (arrastrando y con teclado), con notas y un botón que devuelve el orden final con identificadores.

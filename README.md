@@ -27,7 +27,7 @@ o de `~/.claude/skills/` (todos tus proyectos).
 | Skill | Qué hace |
 | --- | --- |
 | [`revision-cruzada`](skills/revision-cruzada/SKILL.md) | Cuando Claude termina un trabajo, se lo pasa a GPT (con Codex) para que lo revise sin poder tocar nada, y aplica solo lo que comprueba que es verdad. Vale con cualquier combinación: Gemini, DeepSeek, Kimi y otros vía OpenCode. |
-| [`explicar-en-web`](skills/explicar-en-web/SKILL.md) | Cuando no entiendes algo (un concepto, unas finanzas, un contrato, un código o una conversación entera), te lo convierte en una sola web visual con un ejemplo que puedes tocar: cambias un número y ves qué pasa. Funciona en Claude, ChatGPT y en agentes como Claude Code o Codex. Ajusta la sección "Mi estilo" y te la hará a tu gusto a la primera. |
+| [`explicar-en-web`](skills/explicar-en-web/SKILL.md) | Convierte lo que sea en una web visual que se abre en tu navegador: te explica lo que no entiendes con dibujos y un ejemplo que puedes tocar, te pone varias opciones lado a lado para que elijas, te monta un prototipo con controles para ajustar valores o te deja ordenar una lista en columnas. Lo que eliges vuelve solo a Claude Code (o lo copias y lo pegas en cualquier otro agente). Ajusta la sección "Mi estilo" y te la hará a tu gusto a la primera. |
 
 ## Licencia
 
