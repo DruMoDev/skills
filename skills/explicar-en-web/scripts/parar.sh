@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # html-skills-stop — kills this session's html-skills receiver and cleans up
-# its temp files. The Monitor task ID lives in /tmp/explicar-en-web-$SID.monitor-id
+# its temp files. The Monitor task ID lives in $DIR/$SID.monitor-id
 # and must be stopped by the agent via TaskStop, since Monitor is a
 # Claude Code tool, not a shell concept — the script prints the ID and the
 # parent SKILL.md does the TaskStop call.
@@ -21,10 +21,14 @@ case "${CLAUDE_CODE_SESSION_ID:-}" in
     ;;
 esac
 SID="$CLAUDE_CODE_SESSION_ID"
-PIDF=/tmp/explicar-en-web-$SID.pid
-LOGF=/tmp/explicar-en-web-$SID.log
-URLF=/tmp/explicar-en-web-$SID.url
-MIDF=/tmp/explicar-en-web-$SID.monitor-id
+# Carpeta privada (0700) y ficheros 0600: el log y la URL llevan el token de la sesión.
+umask 077
+DIR="${XDG_RUNTIME_DIR:-$HOME/.cache}/explicar-en-web"
+mkdir -p "$DIR" && chmod 700 "$DIR"
+PIDF=$DIR/$SID.pid
+LOGF=$DIR/$SID.log
+URLF=$DIR/$SID.url
+MIDF=$DIR/$SID.monitor-id
 
 echo "SID=$SID"
 

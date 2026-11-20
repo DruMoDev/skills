@@ -29,10 +29,14 @@ case "${CLAUDE_CODE_SESSION_ID:-}" in
     ;;
 esac
 SID="$CLAUDE_CODE_SESSION_ID"
-PIDF=/tmp/explicar-en-web-$SID.pid
-LOGF=/tmp/explicar-en-web-$SID.log
-URLF=/tmp/explicar-en-web-$SID.url
-MIDF=/tmp/explicar-en-web-$SID.monitor-id
+# Carpeta privada (0700) y ficheros 0600: el log y la URL llevan el token de la sesión.
+umask 077
+DIR="${XDG_RUNTIME_DIR:-$HOME/.cache}/explicar-en-web"
+mkdir -p "$DIR" && chmod 700 "$DIR"
+PIDF=$DIR/$SID.pid
+LOGF=$DIR/$SID.log
+URLF=$DIR/$SID.url
+MIDF=$DIR/$SID.monitor-id
 
 echo "SID=$SID"
 echo "LOG=$LOGF"
@@ -52,7 +56,7 @@ if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF")" 2>/dev/null && [ -s "$URLF" ]; the
 fi
 
 # Opportunistic cleanup of stale dead-session files (silent no-op if nothing).
-for f in /tmp/explicar-en-web-*.pid; do
+for f in "$DIR"/*.pid; do
   [ -f "$f" ] || continue
   [ "$f" = "$PIDF" ] && continue
   P=$(cat "$f" 2>/dev/null)
@@ -70,6 +74,7 @@ fi
 
 # Start the receiver on an ephemeral port. HTML_SKILLS_CHANNEL_PORT=0 makes
 # Node pick an open one.
+rm -f "$LOGF" "$URLF"  # nunca escribir a través de un enlace plantado
 : > "$LOGF"
 HTML_SKILLS_CHANNEL_PORT=0 nohup node "$SERVER_JS" > "$LOGF" 2>&1 </dev/null &
 echo $! > "$PIDF"
